@@ -1,0 +1,62 @@
+# Step 1: Local infrastructure for the notification service
+# Starts: Kafka (message queue), Kafka UI (web dashboard), Postgres (database)
+# Run with:  docker compose up -d
+# Stop with: docker compose down
+
+services:
+
+  # ---------- Kafka: the "line" where notifications wait ----------
+  kafka:
+    image: apache/kafka:3.9.1
+    container_name: kafka
+    ports:
+      - "9092:9092"          # your Spring Boot app connects here (localhost:9092)
+    environment:
+      # Run Kafka in KRaft mode (no Zookeeper needed)
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      # Two doors into Kafka:
+      #   PLAINTEXT      -> used by other containers (Kafka UI) at kafka:29092
+      #   PLAINTEXT_HOST -> used by apps on your computer at localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://:29092,PLAINTEXT_HOST://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+      # Single-broker settings (fine for local learning, not for production)
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  # ---------- Kafka UI: see topics and messages in your browser ----------
+  kafka-ui:
+    image: kafbat/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8090:8080"          # open http://localhost:8090
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    depends_on:
+      - kafka
+
+  # ---------- Postgres: stores notification history and status ----------
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: notifications
+      POSTGRES_USER: notify
+      POSTGRES_PASSWORD: notify123
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # keeps data even if the container restarts
+
+volumes:
+  pgdata:
