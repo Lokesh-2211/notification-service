@@ -29,6 +29,38 @@ public class Notification {
     protected Notification() {
     }
 
+    public String getNotificationId() {
+        return notificationId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public Channel getChannel() {
+        return channel;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public String getRecipient() {
+        return recipient;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
     public Notification(NotificationEvent event, String status) {
         this.notificationId = event.notificationId();
         this.userId = event.userId();
