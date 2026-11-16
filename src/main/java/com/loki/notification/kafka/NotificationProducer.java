@@ -7,26 +7,37 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
-/**
- * Puts notification events on the Kafka topic.
- */
+import java.util.List;
+
 @Component
 public class NotificationProducer {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationProducer.class);
 
     private final KafkaTemplate<String, NotificationEvent> kafkaTemplate;
-    private final String topic;
+    private final String urgentTopic;
+    private final String bulkTopic;
+    private final List<String> urgentTypes;
 
     public NotificationProducer(KafkaTemplate<String, NotificationEvent> kafkaTemplate,
-                                @Value("${app.kafka.topic}") String topic) {
+                                @Value("${app.kafka.urgent-topic}") String urgentTopic,
+                                @Value("${app.kafka.bulk-topic}") String bulkTopic,
+                                @Value("${app.kafka.urgent-types}") List<String> urgentTypes) {
         this.kafkaTemplate = kafkaTemplate;
-        this.topic = topic;
+        this.urgentTopic = urgentTopic;
+        this.bulkTopic = bulkTopic;
+        this.urgentTypes = urgentTypes;
     }
 
     public void send(NotificationEvent event) {
-        // Key = userId. Kafka sends messages with the same key to the same partition,
-        // so one user's notifications stay in order.
+        // Pick the lane
+        String topic;
+        if (urgentTypes.contains(event.type())) {
+            topic = urgentTopic;
+        } else {
+            topic = bulkTopic;
+        }
+
         kafkaTemplate.send(topic, event.userId(), event)
                 .whenComplete((result, error) -> {
                     if (error != null) {

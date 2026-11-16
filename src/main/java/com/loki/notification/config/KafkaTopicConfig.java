@@ -14,10 +14,18 @@ import org.springframework.kafka.config.TopicBuilder;
 public class KafkaTopicConfig {
 
     @Bean
-    public NewTopic notificationsTopic(@Value("${app.kafka.topic}") String topicName) {
-        return TopicBuilder.name(topicName)
-                .partitions(3)   // 3 "lanes" inside the topic, so up to 3 workers can read in parallel
-                .replicas(1)     // only 1 copy, because we run a single Kafka broker locally
+    public NewTopic urgentTopic(@Value("${app.kafka.urgent-topic}") String name) {
+        return TopicBuilder.name(name)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic bulkTopic(@Value("${app.kafka.bulk-topic}") String name) {
+        return TopicBuilder.name(name)
+                .partitions(3)
+                .replicas(1)
                 .build();
     }
 }

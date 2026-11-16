@@ -37,4 +37,6 @@ spring:
 
 app:
   kafka:
-    topic: notifications
+    urgent-topic: notifications-urgent
+    bulk-topic: notifications-bulk
+    urgent-types: PASSWORD_RESET,OTP,SECURITY_ALERT
