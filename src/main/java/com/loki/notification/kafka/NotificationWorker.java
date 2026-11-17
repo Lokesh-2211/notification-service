@@ -54,6 +54,11 @@ public class NotificationWorker {
                 event.message(),
                 event.notificationId());
 
+        // 🧪 TEST ONLY: pretend the email provider is down
+        if (event.recipient().contains("fail")) {
+            throw new RuntimeException("Email provider is down!");
+        }
+
         // 3. Save it in the database
         repository.save(new Notification(event, "SENT"));
         log.info("💾 Saved notification {} as SENT", event.notificationId());

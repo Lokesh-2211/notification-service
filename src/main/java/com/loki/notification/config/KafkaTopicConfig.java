@@ -28,4 +28,20 @@ public class KafkaTopicConfig {
                 .replicas(1)
                 .build();
     }
+
+    @Bean
+    public NewTopic urgentDltTopic(@Value("${app.kafka.urgent-topic}-dlt") String name) {
+        return TopicBuilder.name(name)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic bulkDltTopic(@Value("${app.kafka.bulk-topic}-dlt") String name) {
+        return TopicBuilder.name(name)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
 }
