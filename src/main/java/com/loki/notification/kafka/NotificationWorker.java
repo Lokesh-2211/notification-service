@@ -1,5 +1,7 @@
 package com.loki.notification.kafka;
 
+import com.loki.notification.email.EmailSender;
+import com.loki.notification.model.Channel;
 import com.loki.notification.model.Notification;
 import com.loki.notification.model.NotificationEvent;
 import com.loki.notification.repository.NotificationRepository;
@@ -9,7 +11,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 /**
- * The cooks: read notifications from Kafka and "send" them.
+ * The cooks: read notifications from Kafka and send them.
  * Two listeners (urgent and bulk) work at the same time,
  * so urgent notifications never wait behind bulk ones.
  */
@@ -19,9 +21,12 @@ public class NotificationWorker {
     private static final Logger log = LoggerFactory.getLogger(NotificationWorker.class);
 
     private final NotificationRepository repository;
+    private final EmailSender emailSender;                                   // NEW
 
-    public NotificationWorker(NotificationRepository repository) {
+    public NotificationWorker(NotificationRepository repository,
+                              EmailSender emailSender) {                     // NEW
         this.repository = repository;
+        this.emailSender = emailSender;                                      // NEW
     }
 
     // 🚀 Cook #1: only handles the urgent lane
@@ -46,17 +51,19 @@ public class NotificationWorker {
             return;
         }
 
-        // 2. "Send" it (for now, just print it)
-        log.info("📨 Sending {} to {} via {}: \"{}\" (id={})",
-                event.type(),
-                event.recipient(),
-                event.channel(),
-                event.message(),
-                event.notificationId());
-
-        // 🧪 TEST ONLY: pretend the email provider is down
-        if (event.recipient().contains("fail")) {
-            throw new RuntimeException("Email provider is down!");
+        // 2. Send it
+        if (event.channel() == Channel.EMAIL) {                              // NEW
+            String subject = event.type().replace("_", " ");                 // NEW
+            emailSender.send(event.recipient(), subject, event.message());   // NEW
+            log.info("📧 Email sent to {} (id={})",                           // NEW
+                    event.recipient(), event.notificationId());              // NEW
+        } else {
+            log.info("📨 (pretend) Sending {} to {} via {}: \"{}\" (id={})",
+                    event.type(),
+                    event.recipient(),
+                    event.channel(),
+                    event.message(),
+                    event.notificationId());
         }
 
         // 3. Save it in the database

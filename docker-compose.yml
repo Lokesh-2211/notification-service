@@ -58,5 +58,13 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data   # keeps data even if the container restarts
 
+  # ---------- Mailpit: a fake email server that catches every email ----------
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mailpit
+    ports:
+      - "1025:1025"          # SMTP: your app sends emails here
+      - "8025:8025"          # Web inbox: open http://localhost:8025
+
 volumes:
   pgdata:
