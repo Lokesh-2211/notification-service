@@ -90,7 +90,7 @@ docker compose up -d
 Run `NotificationServiceApplication` from your IDE, or:
 
 ```bash
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
 
 The API starts on http://localhost:8080. Kafka topics and the database table are created automatically on startup.
